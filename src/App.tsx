@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'primereact/button';
-import ModelDownloadDrawer from './ModelDownloadDrawer';
-import ChatComponent from './ChatComponent';
+import ModelDownloadDrawer from './components/modeldownload/ModelDownloadDrawer';
+import ChatComponent from './components/chatcomponent/ChatComponent';
 import 'primereact/resources/primereact.min.css';
 import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primeicons/primeicons.css';
 import { Dropdown  } from 'primereact/dropdown';
+import ManageModelsDrawer from './components/managemodel/ManageModelDrawer';
 
 interface Model {
   label: string;
@@ -16,7 +17,7 @@ const App: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [downloadedModels, setDownloadedModels] = useState<Model[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
-
+  const [manageDrawerVisible, setManageDrawerVisible] = useState(false);
   
   const fetchDownloadedModels = async () => {
     try {
@@ -50,7 +51,11 @@ const App: React.FC = () => {
           placeholder="Seleziona un modello"
           style={{ width: '300px' }}
         />
-
+ <Button
+          label="Gestisci i Modelli"
+          icon="pi pi-cog"
+          onClick={() => setManageDrawerVisible(true)} // Apre il drawer di gestione
+        />
         {/* Pulsante per aprire il drawer */}
         <Button
           label="Scarica Modello"
@@ -63,11 +68,17 @@ const App: React.FC = () => {
       <ModelDownloadDrawer
         visible={drawerVisible}
         onHide={() => setDrawerVisible(false)}
+        fetchDownloadedModels={fetchDownloadedModels}
+      />
+       <ManageModelsDrawer
+        visible={manageDrawerVisible}
+        onHide={() => setManageDrawerVisible(false)}
+        downloadedModels={downloadedModels} // Passa i modelli scaricati
+        onModelDelete={fetchDownloadedModels} // Aggiorna la lista dei modelli dopo la cancellazione
       />
 
       {/* Component di chat */}
       <div style={{ marginTop: '2rem' }}>
-        <h2>Chat con Ollama</h2>
         <ChatComponent selectedModel={selectedModel} />
       </div>
     </div>

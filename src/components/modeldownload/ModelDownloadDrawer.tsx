@@ -3,14 +3,15 @@ import { Sidebar } from 'primereact/sidebar';
 import { Button } from 'primereact/button';
 import { ProgressBar } from 'primereact/progressbar';
 import { Toast } from 'primereact/toast';
-import ModelSelect from './ModelSelect';
+import ModelSelect from '../modelselect/ModelSelect';
 
 interface ModelDownloadDrawerProps {
   visible: boolean;
   onHide: () => void;
+  fetchDownloadedModels: () => void; // Funzione per aggiornare i modelli scaricati
 }
 
-const ModelDownloadDrawer: React.FC<ModelDownloadDrawerProps> = ({ visible, onHide }) => {
+const ModelDownloadDrawer: React.FC<ModelDownloadDrawerProps> = ({ visible, onHide, fetchDownloadedModels }) => {
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -31,30 +32,45 @@ const ModelDownloadDrawer: React.FC<ModelDownloadDrawerProps> = ({ visible, onHi
         body: JSON.stringify({ name: selectedModel }),
       });
 
-      // Simulare progresso con aggiornamento di esempio
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let done = false;
+      let buffer = ''; // Buffer per accumulare i dati
 
       while (!done) {
         const { value, done: readerDone } = await reader?.read()!;
         done = readerDone;
 
         const chunk = decoder.decode(value, { stream: true });
-        console.log(chunk); // Stampa i dati ricevuti
+        buffer += chunk; // Accumula i dati nello stream
+        let boundary = buffer.indexOf('\n'); // Trova il separatore di linea (newline)
 
-        const parsedChunk = JSON.parse(chunk);
-        if (parsedChunk.status === 'downloading digestname') {
-          const percentage = Math.min(100, (parsedChunk.completed / parsedChunk.total) * 100);
-          setProgress(percentage);
-        } else if (parsedChunk.status === 'success') {
-          setProgress(100);
-          toast.current?.show({
-            severity: 'success',
-            summary: 'Download completato',
-            detail: `Il modello ${selectedModel} è stato scaricato con successo!`,
-            life: 3000,
-          });
+        while (boundary !== -1) {
+          const completeChunk = buffer.slice(0, boundary);
+          buffer = buffer.slice(boundary + 1);
+          boundary = buffer.indexOf('\n');
+
+          try {
+            const parsedChunk = JSON.parse(completeChunk);
+
+            if (parsedChunk.status.startsWith('pulling') && parsedChunk.completed !== undefined && parsedChunk.total !== undefined) {
+              const percentage = Math.min(99, (parsedChunk.completed / parsedChunk.total) * 100);
+              setProgress(percentage); // Aggiorna lo stato del progresso
+            } else if (parsedChunk.status === 'success') {
+              setProgress(100); // Imposta il progresso al 100%
+              toast.current?.show({
+                severity: 'success',
+                summary: 'Download completato',
+                detail: `Il modello ${selectedModel} è stato scaricato con successo!`,
+                life: 3000,
+              });
+
+              // Aggiorna la lista dei modelli scaricati
+              fetchDownloadedModels(); // Chiama la funzione per aggiornare i modelli
+            }
+          } catch (e) {
+            console.error('Errore durante il parsing del JSON:', e);
+          }
         }
       }
     } catch (error) {
@@ -76,7 +92,6 @@ const ModelDownloadDrawer: React.FC<ModelDownloadDrawerProps> = ({ visible, onHi
       <Sidebar visible={visible} onHide={onHide} position="right">
         <h3>Seleziona un Modello da Scaricare</h3>
         <ModelSelect selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
-
         <div style={{ marginTop: '1rem' }}>
           <Button
             label="Download"
