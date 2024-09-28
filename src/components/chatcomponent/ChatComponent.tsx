@@ -17,6 +17,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
   const [message, setMessage] = useState<string>('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]); // Storia della chat
   const [loading, setLoading] = useState(false);
+  const [partialResponse, setPartialResponse] = useState<string>(''); // Stato per la risposta parziale del bot
   const toast = useRef<Toast>(null);
   const chatBoxRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null); // Aggiunto ref per l'input
@@ -26,7 +27,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
     if (chatBoxRef.current) {
       chatBoxRef.current.scrollTop = chatBoxRef.current.scrollHeight;
     }
-  }, [chatHistory]);
+  }, [chatHistory, partialResponse]); // Aggiunto partialResponse per scroll dinamico
 
   // Focus automatico sull'input al montaggio e quando la risposta è completata
   useEffect(() => {
@@ -38,6 +39,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
   // Funzione per cancellare tutti i messaggi
   const clearMessages = () => {
     setChatHistory([]); // Svuota lo stato chatHistory per rimuovere tutti i messaggi
+    setPartialResponse(''); // Resetta anche la risposta parziale
     toast.current?.show({
       severity: 'info',
       summary: 'Chat Pulita',
@@ -70,6 +72,7 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
     setChatHistory((prevChat) => [...prevChat, newUserMessage]);
     setMessage(''); // Pulire l'input subito dopo l'invio
     setLoading(true);
+    setPartialResponse(''); // Resetta la risposta parziale per la nuova richiesta
 
     try {
       const response = await fetch('http://localhost:11434/api/chat', {
@@ -105,16 +108,18 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
             const json = JSON.parse(line);
             fullResponse += json.message.content; // Aggiungi il frammento di risposta
 
+            // Aggiorna la risposta parziale per farla apparire nella bolla del messaggio
+            setPartialResponse(fullResponse);
+
             // Se il server indica che la risposta è completata
             if (json.done) {
               const botMessage: ChatMessage = { role: 'assistant', content: fullResponse };
               setChatHistory((prevChat) => [
                 ...prevChat,
-                botMessage, // Aggiungi la risposta del bot
+                botMessage, // Aggiungi la risposta finale del bot
               ]);
+              setPartialResponse(''); // Resetta la risposta parziale dopo che il messaggio è completato
               setLoading(false);
-
-              // Dopo la risposta del modello, metti il focus sull'input (già gestito da useEffect su loading)
             }
           } catch (e) {
             console.error("Errore durante il parsing del JSON:", e);
@@ -140,7 +145,6 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
       {/* Pulsante per cancellare i messaggi */}
       <div className="clear-button-container">
         <Button
-          label="Cancella Messaggi"
           icon="pi pi-trash"
           className="p-button-danger"
           onClick={clearMessages}
@@ -158,6 +162,12 @@ const ChatComponent: React.FC<ChatComponentProps> = ({ selectedModel }) => {
               {msg.content}
             </div>
           ))}
+          {/* Mostra la risposta parziale durante lo streaming */}
+          {loading && partialResponse && (
+            <div className="message bot">
+              {partialResponse}
+            </div>
+          )}
         </div>
       </div>
       <div className="input-container">
