@@ -1,0 +1,27 @@
+.create-model-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .create-model-form {
+    width: 400px;
+    padding: 2rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background-color: #fff;
+  }
+  
+  .create-model-form h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  
+  .create-model-form input,
+  .create-model-form .p-dropdown,
+  .create-model-form .p-button {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  

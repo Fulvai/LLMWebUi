@@ -7,6 +7,7 @@ const models = [
   { label: 'Llama 3.1 8B 4.7GB', value: 'llama3.1' },
   { label: 'Llama 3.1 70B 40GB', value: 'llama3.1:70b' },
   { label: 'Llama 3.1 405B 231GB', value: 'llama3.1:405b' },
+  {label: 'Phi 3.5 3.8b 2.2 GB', value: 'phi3.5'},
   { label: 'Phi 3 Mini 3.8B 2.3GB', value: 'phi3' },
   { label: 'Phi 3 Medium 14B 7.9GB', value: 'phi3:medium' },
   { label: 'Gemma 2 2B 1.6GB', value: 'gemma2:2b' },
