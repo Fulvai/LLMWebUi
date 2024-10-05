@@ -62,7 +62,7 @@ const AppContent: React.FC = () => {
       <Menubar model={menuItems} />
 
       <Routes>
-        <Route path="/create-model" element={<CreateModel />} />
+      <Route path="/create-model" element={<CreateModel downloadedModels={downloadedModels} />} />
         <Route
           path="/"
           element={

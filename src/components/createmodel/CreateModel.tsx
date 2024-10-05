@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { Button } from 'primereact/button';
 import { InputText } from 'primereact/inputtext';
 import { Toast } from 'primereact/toast';
-import ModelSelect from '../modelselect/ModelSelect'; // Importa il componente ModelSelect
-import './CreateModel.css'; // Importa il file CSS
+import ModelSelect from '../modelselect/ModelSelect'; // Per il download dei modelli
+import { Dropdown } from 'primereact/dropdown'; // Per visualizzare i modelli scaricati
+import './CreateModel.css';
 
-const CreateModel: React.FC = () => {
+interface CreateModelProps {
+  downloadedModels: { label: string; value: string }[]; // I modelli scaricati
+}
+
+const CreateModel: React.FC<CreateModelProps> = ({ downloadedModels }) => {
   const [modelName, setModelName] = useState(''); // Nome del modello
   const [systemText, setSystemText] = useState(''); // Testo fornito dall'utente
   const [selectedModel, setSelectedModel] = useState<string | null>(null); // Stato per il modello selezionato
@@ -81,8 +86,14 @@ const CreateModel: React.FC = () => {
           placeholder="Nome del Modello"
         />
 
-        {/* Dropdown per la selezione del modello */}
-        <ModelSelect selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
+        {/* Dropdown per la selezione dei modelli scaricati */}
+        <Dropdown
+          value={selectedModel}
+          options={downloadedModels} 
+          onChange={(e) => setSelectedModel(e.value)}
+          placeholder="Seleziona un modello scaricato"
+          style={{ width: '100%' }}
+        />
 
         {/* Campo per il contenuto del sistema (testo dell'utente) */}
         <InputText
